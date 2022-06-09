@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Log;
 
 class MenuController extends BaseController
 {
@@ -95,6 +96,25 @@ class MenuController extends BaseController
      */
 
     public function getMenuItems() {
-        throw new \Exception('implement in coding task 3');
+        $menuItems = MenuItem::all();
+        $parentMenuItem = $menuItems->first(function ($item) {
+            return $item->parent_id === null;
+        });
+
+        $parentMenuItem->children = [];
+
+        $this->findMenuItemsChildren($parentMenuItem, $menuItems);
+
+        return [$parentMenuItem];
+    }
+
+    private function findMenuItemsChildren($parent, $menuItems) {
+        foreach ($menuItems as $item) {
+            if ($item->parent_id === $parent->id) {
+                $parent->children = array_merge($parent->children, [$item]);
+                $item->children = [];
+                $this->findMenuItemsChildren($item, $menuItems);
+            }
+        }
     }
 }
